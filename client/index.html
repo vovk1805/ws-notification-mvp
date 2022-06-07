@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WS Client</title>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <style>
+    body {
+      font-family: Monaco;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="root"></div>
+
+
+  <script type="module">
+
+    const userId = getUserId(navigator.userAgent);
+    const access_token = btoa(JSON.stringify({ userId }));
+    const socket = new WebSocket(`wss://102prwir35.execute-api.eu-central-1.amazonaws.com/dev?access_token=${access_token}`);
+
+    socket.addEventListener('open', e => {
+      console.log('WebSocket is connected')
+    })
+
+    socket.addEventListener('close', e => {
+      console.log('WebSocket is closed')
+    })
+
+    socket.addEventListener('error', e => {
+      console.log(`error >>>>>>>`, e);
+      console.log('WebSocket is in error')
+    })
+
+    socket.addEventListener('message', e => {
+      console.log(`Notification (message): ${JSON.parse(e.data).message}`)
+    })
+
+    window.closeConnetion = function () {
+      socket.close();
+    }
+
+
+    function getUserId (userAgent) {
+      if (userAgent.includes('Firefox')) {
+        return 'Firefox';
+      }
+
+      if (userAgent.includes('Edg')) {
+        return 'Edge';
+      }
+
+      if (userAgent.includes('Safari/605')) {
+        return 'Safari';
+      }
+
+      return 'Chrome';
+    };
+  </script>
+</body>
+
+</html>

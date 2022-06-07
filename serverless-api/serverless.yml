@@ -1,0 +1,67 @@
+service: aws-node-http-api-project
+frameworkVersion: '2 || 3'
+useDotenv: true
+
+provider:
+  name: aws
+  logs:
+    websocket: true
+  runtime: nodejs12.x
+  lambdaHashingVersion: '20201221'
+  profile: personal_vovk1805_iam
+  region: eu-central-1
+  iam:
+    role:
+      statements:
+        - Effect: 'Allow'
+          Action:
+            - 'dynamodb:PutItem'
+            - 'dynamodb:Get*'
+            - 'dynamodb:Scan*'
+            - 'dynamodb:UpdateItem'
+            - 'dynamodb:DeleteItem'
+          Resource: arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${env:DYNAMODB_USERS_WS_CONNECTIONS_TABLE}
+  environment:
+    DYNAMODB_USERS_WS_CONNECTIONS_TABLE: ${env:DYNAMODB_USERS_WS_CONNECTIONS_TABLE}
+    WS_CONNECTION_URL: ${env:WS_CONNECTION_URL}
+  websocketsApiName: ws-real-time-notifications
+  websocketsApiRouteSelectionExpression: $request.body.action
+
+resources:
+  Resources:
+    UsersWsConnectionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        TableName: usersWsConnectionsTable
+
+functions:
+  getConnections:
+    handler: notificationService.getConnections
+    events:
+      - httpApi:
+          path: /connections
+          method: get
+  connect:
+    handler: notificationService.handleConnect
+    events:
+      - websocket:
+          route: $connect
+          # authorizer: auth
+          authorizer:
+            name: wsAuthorizer
+            identitySource:
+              - route.request.querystring.access_token
+  disconnect:
+    handler: notificationService.handleDisconnect
+    events:
+      - websocket:
+          route: $disconnect
+  wsAuthorizer:
+    handler: notificationService.wsAuthorizer
