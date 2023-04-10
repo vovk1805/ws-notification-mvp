@@ -3,6 +3,6 @@
     "serverless-apigw-binary": "^0.4.4"
   },
   "devDependencies": {
-    "aws-sdk": "^2.1148.0"
+    "aws-sdk": "^2.1354.0"
   }
 }
